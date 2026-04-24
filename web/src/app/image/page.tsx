@@ -7,7 +7,7 @@ import { ImageComposer } from "@/app/image/components/image-composer";
 import { ImageResults, type ImageLightboxItem } from "@/app/image/components/image-results";
 import { ImageSidebar } from "@/app/image/components/image-sidebar";
 import { ImageLightbox } from "@/components/image-lightbox";
-import { editImage, fetchAccounts, generateImage, type Account } from "@/lib/api";
+import { editImage, fetchAccounts, generateImage, type Account, type ImageModel, type ImageSize } from "@/lib/api";
 import {
   clearImageConversations,
   deleteImageConversation,
@@ -170,6 +170,8 @@ export default function ImagePage() {
 
   const [imagePrompt, setImagePrompt] = useState("");
   const [imageCount, setImageCount] = useState("1");
+  const [imageModel, setImageModel] = useState<ImageModel>("auto");
+  const [imageSize, setImageSize] = useState<ImageSize>("auto");
   const [imageMode, setImageMode] = useState<ImageConversationMode>("generate");
   const [referenceImageFiles, setReferenceImageFiles] = useState<File[]>([]);
   const [referenceImages, setReferenceImages] = useState<StoredReferenceImage[]>([]);
@@ -324,8 +326,8 @@ export default function ImagePage() {
   const clearComposerInputs = useCallback(() => {
     setImagePrompt("");
     setImageCount("1");
-    setReferenceImageFiles([]);
     setReferenceImages([]);
+    setReferenceImageFiles([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -524,8 +526,8 @@ export default function ImagePage() {
           try {
             const data =
               queuedTurn.mode === "edit"
-                ? await editImage(referenceFiles, queuedTurn.prompt)
-                : await generateImage(queuedTurn.prompt);
+                ? await editImage(referenceFiles, queuedTurn.prompt, queuedTurn.model !== "auto" ? queuedTurn.model : undefined, queuedTurn.size !== "auto" ? queuedTurn.size : undefined)
+                : await generateImage(queuedTurn.prompt, queuedTurn.model !== "auto" ? queuedTurn.model : undefined, queuedTurn.size !== "auto" ? queuedTurn.size : undefined);
             const first = data.data?.[0];
             if (!first?.b64_json) {
               throw new Error("未返回图片数据");
@@ -687,7 +689,8 @@ export default function ImagePage() {
     const draftTurn: ImageTurn = {
       id: turnId,
       prompt,
-      model: "auto",
+      model: imageModel,
+      size: imageSize,
       mode: imageMode,
       referenceImages: imageMode === "edit" ? referenceImages : [],
       count: parsedCount,
@@ -760,6 +763,8 @@ export default function ImagePage() {
             mode={imageMode}
             prompt={imagePrompt}
             imageCount={imageCount}
+            imageModel={imageModel}
+            imageSize={imageSize}
             availableQuota={availableQuota}
             activeTaskCount={activeTaskCount}
             referenceImages={referenceImages}
@@ -768,6 +773,8 @@ export default function ImagePage() {
             onModeChange={setImageMode}
             onPromptChange={setImagePrompt}
             onImageCountChange={setImageCount}
+            onImageModelChange={setImageModel}
+            onImageSizeChange={setImageSize}
             onSubmit={handleSubmit}
             onPickReferenceImage={() => fileInputRef.current?.click()}
             onReferenceImageChange={handleReferenceImageChange}

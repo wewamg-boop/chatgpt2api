@@ -5,7 +5,9 @@ import { useMemo, useState, type ClipboardEvent, type RefObject } from "react";
 import { ImageLightbox } from "@/components/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import type { ImageModel, ImageSize } from "@/lib/api";
 import type { ImageConversationMode } from "@/store/image-conversations";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +15,8 @@ type ImageComposerProps = {
   mode: ImageConversationMode;
   prompt: string;
   imageCount: string;
+  imageModel: ImageModel;
+  imageSize: ImageSize;
   availableQuota: string;
   activeTaskCount: number;
   referenceImages: Array<{ name: string; dataUrl: string }>;
@@ -21,6 +25,8 @@ type ImageComposerProps = {
   onModeChange: (value: ImageConversationMode) => void;
   onPromptChange: (value: string) => void;
   onImageCountChange: (value: string) => void;
+  onImageModelChange: (value: ImageModel) => void;
+  onImageSizeChange: (value: ImageSize) => void;
   onSubmit: () => void | Promise<void>;
   onPickReferenceImage: () => void;
   onReferenceImageChange: (files: File[]) => void | Promise<void>;
@@ -31,6 +37,8 @@ export function ImageComposer({
   mode,
   prompt,
   imageCount,
+  imageModel,
+  imageSize,
   availableQuota,
   activeTaskCount,
   referenceImages,
@@ -39,6 +47,8 @@ export function ImageComposer({
   onModeChange,
   onPromptChange,
   onImageCountChange,
+  onImageModelChange,
+  onImageSizeChange,
   onSubmit,
   onPickReferenceImage,
   onReferenceImageChange,
@@ -184,6 +194,27 @@ export function ImageComposer({
                       图生图
                     </ModeButton>
                   </div>
+                  <Select value={imageModel} onValueChange={(value) => onImageModelChange(value as ImageModel)}>
+                    <SelectTrigger className="h-10 w-auto gap-1 rounded-full border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-700 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">自动</SelectItem>
+                      <SelectItem value="gpt-image-1">gpt-image-1</SelectItem>
+                      <SelectItem value="gpt-image-2">gpt-image-2</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={imageSize} onValueChange={(value) => onImageSizeChange(value as ImageSize)}>
+                    <SelectTrigger className="h-10 w-auto gap-1 rounded-full border-stone-200 bg-white px-3 py-2 text-sm font-medium text-stone-700 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">自动比例</SelectItem>
+                      <SelectItem value="1:1">1:1</SelectItem>
+                      <SelectItem value="16:9">16:9</SelectItem>
+                      <SelectItem value="9:16">9:16</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <button

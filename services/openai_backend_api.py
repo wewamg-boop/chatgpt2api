@@ -295,7 +295,7 @@ class OpenAIBackendAPI:
 
     def _build_image_prompt(self, prompt: str, size: str) -> str:
         """把标准图片 prompt 和宽高比转成底层图片生成 prompt。"""
-        if not size:
+        if not size or size == "auto":
             return prompt
         if size not in {"1:1", "16:9", "9:16"}:
             return f"{prompt.strip()}\n\n输出图片，宽高比为 {size}。"
@@ -1294,14 +1294,14 @@ class OpenAIBackendAPI:
         """返回当前模式下可用模型，格式对齐 OpenAI `/v1/models`。"""
         return self._normalize_models(self._get_models_raw(authenticated=bool(self.access_token)))
 
-    def images_generations(self, prompt: str, model: str = "gpt-image-2", size: str = "1:1",
+    def images_generations(self, prompt: str, model: str = "gpt-image-2", size: str = "auto",
                            response_format: str = "url") -> Dict[str, Any]:
         """返回 OpenAI `/v1/images/generations` 风格结果。"""
         if self._is_codex_image_model(model):
             return self._run_codex_image_task(prompt, response_format=response_format)
         return self._run_image_task(prompt, model, size, response_format=response_format)
 
-    def images_edits(self, image: str | list[str], prompt: str, model: str = "gpt-image-2", size: str = "1:1",
+    def images_edits(self, image: str | list[str], prompt: str, model: str = "gpt-image-2", size: str = "auto",
                      response_format: str = "url") -> Dict[str, Any]:
         """返回 OpenAI `/v1/images/edits` 风格结果。"""
         images = [image] if isinstance(image, str) else image

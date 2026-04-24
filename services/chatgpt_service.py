@@ -568,6 +568,7 @@ class ChatGPTService:
             n: int,
             response_format: str = "b64_json",
             base_url: str | None = None,
+            size: str = "auto"
     ) -> Iterator[dict[str, object]]:
         emitted = False
         last_error = ""
@@ -598,6 +599,7 @@ class ChatGPTService:
                     result = self._format_image_result(self._new_backend(request_token).images_generations(
                         prompt=prompt,
                         model=model,
+                        size=size,
                         response_format="b64_json",
                     ), prompt, response_format, base_url)
                     account = self.account_service.mark_image_result(request_token, success=True)
@@ -640,10 +642,10 @@ class ChatGPTService:
             raise ImageGenerationError(last_error or "image generation failed")
 
     def generate_with_pool(self, prompt: str, model: str, n: int, response_format: str = "b64_json",
-                           base_url: str = None):
+                           base_url: str = None, size: str = "1:1"):
         created = None
         image_items: list[dict[str, object]] = []
-        for result in self._iter_generated_images_with_pool(prompt, model, n, response_format, base_url):
+        for result in self._iter_generated_images_with_pool(prompt, model, n, response_format, base_url, size):
             if created is None:
                 created = result.get("created")
             data = result.get("data")
@@ -661,6 +663,7 @@ class ChatGPTService:
             n: int,
             response_format: str = "b64_json",
             base_url: str | None = None,
+            size: str = "auto"
     ) -> Iterator[dict[str, object]]:
         last_error = ""
         emitted = False
@@ -745,6 +748,7 @@ class ChatGPTService:
             n: int,
             response_format: str = "b64_json",
             base_url: str = None,
+            size: str = "auto"
     ):
         created = None
         image_items: list[dict[str, object]] = []
@@ -780,6 +784,7 @@ class ChatGPTService:
                         image=self._encode_images(normalized_images),
                         prompt=prompt,
                         model=model,
+                        size=size,
                         response_format="b64_json",
                     ), prompt, response_format, base_url)
                     account = self.account_service.mark_image_result(request_token, success=True)
@@ -831,6 +836,7 @@ class ChatGPTService:
             n: int,
             response_format: str = "b64_json",
             base_url: str | None = None,
+            size: str = "auto"
     ) -> Iterator[dict[str, object]]:
         last_error = ""
         emitted = False

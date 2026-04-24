@@ -3,6 +3,7 @@ import { httpRequest } from "@/lib/request";
 export type AccountType = "Free" | "Plus" | "ProLite" | "Pro" | "Team";
 export type AccountStatus = "正常" | "限流" | "异常" | "禁用";
 export type ImageModel = "auto" | "gpt-image-1" | "gpt-image-2";
+export type ImageSize = "auto" | "1:1" | "16:9" | "9:16";
 
 export type Account = {
   id: string;
@@ -111,7 +112,7 @@ export async function updateAccount(
   });
 }
 
-export async function generateImage(prompt: string, model?: ImageModel) {
+export async function generateImage(prompt: string, model?: ImageModel, size?: ImageSize) {
   return httpRequest<{ created: number; data: Array<{ b64_json: string; revised_prompt?: string }> }>(
     "/v1/images/generations",
     {
@@ -119,6 +120,7 @@ export async function generateImage(prompt: string, model?: ImageModel) {
       body: {
         prompt,
         ...(model ? { model } : {}),
+        ...(size && size !== "auto" ? { size } : {}),
         n: 1,
         response_format: "b64_json",
       },
@@ -126,7 +128,7 @@ export async function generateImage(prompt: string, model?: ImageModel) {
   );
 }
 
-export async function editImage(files: File | File[], prompt: string, model?: ImageModel) {
+export async function editImage(files: File | File[], prompt: string, model?: ImageModel, size?: ImageSize) {
   const formData = new FormData();
   const uploadFiles = Array.isArray(files) ? files : [files];
 
@@ -136,6 +138,9 @@ export async function editImage(files: File | File[], prompt: string, model?: Im
   formData.append("prompt", prompt);
   if (model) {
     formData.append("model", model);
+  }
+  if (size && size !== "auto") {
+    formData.append("size", size);
   }
   formData.append("n", "1");
 
