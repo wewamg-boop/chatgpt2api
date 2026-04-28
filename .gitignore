@@ -13,6 +13,13 @@ data
 config.json
 edit
 
+# Web (Vite)
+web/node_modules
+web/.next
+web/dist
+web/.env.local
+web/dev-proxy.config.json
+
 docker-compose-local.yml
 
 .claude/settings.local.json
