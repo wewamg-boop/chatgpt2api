@@ -36,7 +36,7 @@ COPY VERSION ./
 COPY api ./api
 COPY services ./services
 COPY utils ./utils
-COPY --from=web-build /app/web/out ./web_dist
+COPY --from=web-build /app/web_dist ./web_dist
 
 EXPOSE 80
 
