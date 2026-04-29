@@ -189,3 +189,198 @@ export async function testProxy(url?: string): Promise<{ result: ProxyTestResult
     body: JSON.stringify({ url: url ?? '' }),
   })
 }
+
+// ── Settings Config (legacy name) ─────────────────────────────────
+
+export interface SettingsConfig {
+  'auth-key'?: string
+  refresh_account_interval_minute?: number | string
+  proxy?: string
+  base_url?: string
+  [key: string]: unknown
+}
+
+export async function fetchSettingsConfig(): Promise<{ config: SettingsConfig }> {
+  return request('/api/settings')
+}
+
+export async function updateSettingsConfig(config: SettingsConfig): Promise<{ config: SettingsConfig }> {
+  return request('/api/settings', {
+    method: 'POST',
+    body: JSON.stringify(config),
+  })
+}
+
+// ── CPA Pools ─────────────────────────────────────────────────────
+
+export type CPAImportJob = {
+  job_id?: string
+  status: 'idle' | 'pending' | 'running' | 'completed' | 'failed'
+  total: number
+  completed: number
+  failed: number
+  added?: number
+  skipped?: number
+  refreshed?: number
+  message: string
+  created_at?: string
+  updated_at: string
+}
+
+export type CPAPool = {
+  id: string
+  name: string
+  base_url: string
+  secret_key?: string
+  import_job?: CPAImportJob | null
+}
+
+export type CPARemoteFile = {
+  name: string
+  email: string
+}
+
+export async function fetchCPAPools(): Promise<{ pools: CPAPool[] }> {
+  return request('/api/cpa/pools')
+}
+
+export async function createCPAPool(pool: { name: string; base_url: string; secret_key: string }): Promise<{ pools: CPAPool[] }> {
+  return request('/api/cpa/pools', {
+    method: 'POST',
+    body: JSON.stringify(pool),
+  })
+}
+
+export async function updateCPAPool(poolId: string, updates: { name?: string; base_url?: string; secret_key?: string }): Promise<{ pools: CPAPool[] }> {
+  return request(`/api/cpa/pools/${poolId}`, {
+    method: 'POST',
+    body: JSON.stringify(updates),
+  })
+}
+
+export async function deleteCPAPool(poolId: string): Promise<{ pools: CPAPool[] }> {
+  return request(`/api/cpa/pools/${poolId}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function fetchCPAPoolFiles(poolId: string): Promise<{ pool_id: string; files: CPARemoteFile[] }> {
+  return request(`/api/cpa/pools/${poolId}/files`)
+}
+
+export async function startCPAImport(poolId: string, names: string[]): Promise<{ import_job: CPAImportJob | null }> {
+  return request(`/api/cpa/pools/${poolId}/import`, {
+    method: 'POST',
+    body: JSON.stringify({ names }),
+  })
+}
+
+// ── Sub2API ───────────────────────────────────────────────────────
+
+export type Sub2APIServer = {
+  id: string
+  name: string
+  base_url: string
+  email: string
+  has_api_key: boolean
+  group_id: string
+  import_job?: CPAImportJob | null
+}
+
+export type Sub2APIRemoteAccount = {
+  id: string
+  name: string
+  email: string
+  plan_type: string
+  status: string
+  expires_at: string
+  has_refresh_token: boolean
+}
+
+export type Sub2APIRemoteGroup = {
+  id: string
+  name: string
+  description: string
+  platform: string
+  status: string
+  account_count: number
+  active_account_count: number
+}
+
+export async function fetchSub2APIServers(): Promise<{ servers: Sub2APIServer[] }> {
+  return request('/api/sub2api/servers')
+}
+
+export async function createSub2APIServer(server: {
+  name: string
+  base_url: string
+  email: string
+  password: string
+  api_key: string
+  group_id: string
+}): Promise<{ server: Sub2APIServer; servers: Sub2APIServer[] }> {
+  return request('/api/sub2api/servers', {
+    method: 'POST',
+    body: JSON.stringify(server),
+  })
+}
+
+export async function updateSub2APIServer(
+  serverId: string,
+  updates: {
+    name?: string
+    base_url?: string
+    email?: string
+    password?: string
+    api_key?: string
+    group_id?: string
+  },
+): Promise<{ server: Sub2APIServer; servers: Sub2APIServer[] }> {
+  return request(`/api/sub2api/servers/${serverId}`, {
+    method: 'POST',
+    body: JSON.stringify(updates),
+  })
+}
+
+export async function fetchSub2APIServerGroups(serverId: string): Promise<{ server_id: string; groups: Sub2APIRemoteGroup[] }> {
+  return request(`/api/sub2api/servers/${serverId}/groups`)
+}
+
+export async function deleteSub2APIServer(serverId: string): Promise<{ servers: Sub2APIServer[] }> {
+  return request(`/api/sub2api/servers/${serverId}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function fetchSub2APIServerAccounts(serverId: string): Promise<{ server_id: string; accounts: Sub2APIRemoteAccount[] }> {
+  return request(`/api/sub2api/servers/${serverId}/accounts`)
+}
+
+export async function startSub2APIImport(serverId: string, accountIds: string[]): Promise<{ import_job: CPAImportJob | null }> {
+  return request(`/api/sub2api/servers/${serverId}/import`, {
+    method: 'POST',
+    body: JSON.stringify({ account_ids: accountIds }),
+  })
+}
+
+export async function fetchSub2APIImportJob(serverId: string): Promise<{ import_job: CPAImportJob | null }> {
+  return request(`/api/sub2api/servers/${serverId}/import`)
+}
+
+// ── Proxy Settings ────────────────────────────────────────────────
+
+export type ProxySettings = {
+  enabled: boolean
+  url: string
+}
+
+export async function fetchProxy(): Promise<{ proxy: ProxySettings }> {
+  return request('/api/proxy')
+}
+
+export async function updateProxy(updates: { enabled?: boolean; url?: string }): Promise<{ proxy: ProxySettings }> {
+  return request('/api/proxy', {
+    method: 'POST',
+    body: JSON.stringify(updates),
+  })
+}

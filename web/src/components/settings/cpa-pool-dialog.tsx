@@ -1,0 +1,108 @@
+
+
+import { Eye, EyeOff, Link2, LoaderCircle, Save, Unplug } from "lucide-react";
+
+import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Input } from "../ui/input";
+
+import { useSettingsStore } from "./settings-store";
+
+export function CPAPoolDialog() {
+  const dialogOpen = useSettingsStore((state) => state.dialogOpen);
+  const editingPool = useSettingsStore((state) => state.editingPool);
+  const formName = useSettingsStore((state) => state.formName);
+  const formBaseUrl = useSettingsStore((state) => state.formBaseUrl);
+  const formSecretKey = useSettingsStore((state) => state.formSecretKey);
+  const showSecret = useSettingsStore((state) => state.showSecret);
+  const isSavingPool = useSettingsStore((state) => state.isSavingPool);
+  const setDialogOpen = useSettingsStore((state) => state.setDialogOpen);
+  const setFormName = useSettingsStore((state) => state.setFormName);
+  const setFormBaseUrl = useSettingsStore((state) => state.setFormBaseUrl);
+  const setFormSecretKey = useSettingsStore((state) => state.setFormSecretKey);
+  const setShowSecret = useSettingsStore((state) => state.setShowSecret);
+  const savePool = useSettingsStore((state) => state.savePool);
+
+  return (
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogContent showCloseButton={false} className="rounded-2xl p-6">
+        <DialogHeader className="gap-2">
+          <DialogTitle>{editingPool ? "编辑连接" : "添加连接"}</DialogTitle>
+          <DialogDescription className="text-sm leading-6">
+            {editingPool ? "修改 CPA 连接信息" : "添加一个新的 CLIProxyAPI 连接"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">名称（可选）</label>
+            <Input
+              value={formName}
+              onChange={(event) => setFormName(event.target.value)}
+              placeholder="例如：主号池、备用池"
+              className="h-11 rounded-xl border-gray-200 dark:border-gray-700 bg-white"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Link2 className="size-3.5" />
+              CPA 地址
+            </label>
+            <Input
+              value={formBaseUrl}
+              onChange={(event) => setFormBaseUrl(event.target.value)}
+              placeholder="http://your-cpa-host:8317"
+              className="h-11 rounded-xl border-gray-200 dark:border-gray-700 bg-white"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">
+              <Unplug className="size-3.5" />
+              Management Secret Key
+            </label>
+            <div className="relative">
+              <Input
+                type={showSecret ? "text" : "password"}
+                value={formSecretKey}
+                onChange={(event) => setFormSecretKey(event.target.value)}
+                placeholder={editingPool ? "留空则不修改密钥" : "CPA 管理密钥"}
+                className="h-11 rounded-xl border-gray-200 dark:border-gray-700 bg-white pr-10"
+              />
+              <button
+                type="button"
+                className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 dark:text-gray-500 transition hover:text-gray-600 dark:text-gray-400"
+                onClick={() => setShowSecret(!showSecret)}
+              >
+                {showSecret ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="pt-2">
+          <Button
+            variant="secondary"
+            className="h-10 rounded-xl bg-gray-100 dark:bg-gray-800 px-5 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:bg-gray-700"
+            onClick={() => setDialogOpen(false)}
+            disabled={isSavingPool}
+          >
+            取消
+          </Button>
+          <Button
+            className="h-10 rounded-xl bg-gray-900 dark:bg-gray-100 dark:text-gray-900 px-5 text-white hover:bg-gray-800 dark:hover:bg-gray-200"
+            onClick={() => void savePool()}
+            disabled={isSavingPool}
+          >
+            {isSavingPool ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}
+            {editingPool ? "保存修改" : "添加"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

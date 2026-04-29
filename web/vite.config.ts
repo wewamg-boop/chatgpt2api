@@ -33,21 +33,40 @@ export default defineConfig(({ command }) => {
     },
     server: {
       host: true,
-      proxy:
-        devProxyConfig?.enabled
+      proxy: {
+        // Backend management APIs (auth, accounts, settings)
+        '/auth': {
+          target: 'http://127.0.0.1:8080',
+          changeOrigin: true,
+        },
+        '/api': {
+          target: 'http://127.0.0.1:8080',
+          changeOrigin: true,
+        },
+        '/v1': {
+          target: 'http://127.0.0.1:8080',
+          changeOrigin: true,
+        },
+        '/version': {
+          target: 'http://127.0.0.1:8080',
+          changeOrigin: true,
+        },
+        // Image API dev proxy
+        ...(devProxyConfig?.enabled
           ? {
               [devProxyConfig.prefix]: {
                 target: devProxyConfig.target,
                 changeOrigin: devProxyConfig.changeOrigin,
                 secure: devProxyConfig.secure,
-                rewrite: (path) =>
+                rewrite: (path: string) =>
                   path.replace(
                     new RegExp(`^${devProxyConfig.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`),
                     '',
                   ),
               },
             }
-          : undefined,
+          : {}),
+      },
     },
   }
 })

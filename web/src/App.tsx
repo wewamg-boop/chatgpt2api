@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { initStore } from './store'
 import { useStore } from './store'
 import { normalizeBaseUrl } from './lib/api'
@@ -17,8 +18,8 @@ import Toast from './components/Toast'
 import MaskEditorModal from './components/MaskEditorModal'
 import ImageContextMenu from './components/ImageContextMenu'
 import { LoginPage } from './components/LoginPage'
-import { AccountsPage } from './components/AccountsPage'
-import { ServerSettings } from './components/ServerSettings'
+import AccountsPage from './components/AccountsPage'
+import SettingsPage from './components/settings/SettingsPage'
 
 function ImagePlayground() {
   const setSettings = useStore((s) => s.setSettings)
@@ -133,7 +134,8 @@ export default function App() {
   }, [navigate])
 
   return (
-    <Routes>
+    <>
+      <Routes>
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       <Route path="/" element={
         <RequireAuth>
@@ -152,11 +154,13 @@ export default function App() {
         <RequireAuth>
           <>
             <Header showNav onLogout={handleLogout} />
-            <ServerSettings />
+            <SettingsPage />
           </>
         </RequireAuth>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+      <Toaster richColors position="top-center" />
+    </>
   )
 }
