@@ -86,7 +86,7 @@ export function ServerSettings() {
           </div>
           <div>
             <label className="block text-xs font-medium text-stone-500 mb-1">认证密钥</label>
-            <input type="password" value={config['auth-key'] || ''} onChange={(e) => setConfig({ ...config, 'auth-key': e.target.value })}
+            <input type="password" value={String(config['auth-key'] || '')} onChange={(e) => setConfig({ ...config, 'auth-key': e.target.value })}
               placeholder="未设置"
               className="w-full rounded-xl border border-stone-200 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:border-stone-400 focus:outline-none focus:ring-0" />
           </div>

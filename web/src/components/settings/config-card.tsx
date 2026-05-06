@@ -22,6 +22,12 @@ export function ConfigCard() {
   const setProxy = useSettingsStore((state) => state.setProxy);
   const setBaseUrl = useSettingsStore((state) => state.setBaseUrl);
   const saveConfig = useSettingsStore((state) => state.saveConfig);
+  const setConfigField = (field: string, value: unknown) => {
+    const cfg = useSettingsStore.getState().config;
+    if (cfg) {
+      useSettingsStore.setState({ config: { ...cfg, [field]: value } });
+    }
+  };
 
   const handleTestProxy = async () => {
     const candidate = String(config?.proxy || "").trim();
@@ -127,6 +133,63 @@ export function ConfigCard() {
               className="h-10 rounded-xl border-gray-200 dark:border-gray-700 bg-white"
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">用于生成图片结果的访问前缀地址。</p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-700 dark:text-gray-300">全局系统提示</label>
+            <textarea
+              value={String(config?.global_system_prompt || "")}
+              onChange={(e) => setConfigField("global_system_prompt", e.target.value)}
+              placeholder="附加到每个请求的系统提示..."
+              rows={2}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-700 dark:text-gray-300">图片轮询超时(秒)</label>
+            <Input
+              type="number"
+              value={String(config?.image_poll_timeout_secs || 120)}
+              onChange={(e) => setConfigField("image_poll_timeout_secs", parseInt(e.target.value) || 120)}
+              className="h-10 rounded-xl border-gray-200 dark:border-gray-700 bg-white"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-700 dark:text-gray-300">图片账号并发数</label>
+            <Input
+              type="number"
+              value={String(config?.image_account_concurrency || 1)}
+              onChange={(e) => setConfigField("image_account_concurrency", parseInt(e.target.value) || 1)}
+              className="h-10 rounded-xl border-gray-200 dark:border-gray-700 bg-white"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm text-gray-700 dark:text-gray-300">图片保留天数</label>
+            <Input
+              type="number"
+              value={String(config?.image_retention_days || 7)}
+              onChange={(e) => setConfigField("image_retention_days", parseInt(e.target.value) || 7)}
+              className="h-10 rounded-xl border-gray-200 dark:border-gray-700 bg-white"
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!config?.auto_remove_invalid_accounts}
+                onChange={(e) => setConfigField("auto_remove_invalid_accounts", e.target.checked)}
+              />
+              <label className="text-sm text-gray-700 dark:text-gray-300">自动移除无效账号</label>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!config?.auto_remove_rate_limited_accounts}
+                onChange={(e) => setConfigField("auto_remove_rate_limited_accounts", e.target.checked)}
+              />
+              <label className="text-sm text-gray-700 dark:text-gray-300">自动移除限流账号</label>
+            </div>
           </div>
         </div>
 

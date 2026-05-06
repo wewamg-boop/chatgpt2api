@@ -1,13 +1,13 @@
 import base64
-import json
 import hashlib
-import uuid
+import json
+import re
 import time
+import uuid
 from pathlib import Path
-from typing import Any, Dict, Iterator
+from typing import Any, Iterator
 
 from curl_cffi import requests
-import re
 from fastapi import HTTPException
 from utils.log import logger
 
@@ -24,10 +24,7 @@ def is_image_chat_request(body: dict[str, object]) -> bool:
     modalities = body.get("modalities")
     if model in IMAGE_MODELS:
         return True
-    if isinstance(modalities, list):
-        normalized = {str(item or "").strip().lower() for item in modalities}
-        return "image" in normalized
-    return False
+    return isinstance(modalities, list) and "image" in {str(item or "").strip().lower() for item in modalities}
 
 
 def ensure_ok(response: requests.Response, context: str) -> None:
@@ -41,23 +38,6 @@ def ensure_ok(response: requests.Response, context: str) -> None:
     raise RuntimeError(f"{context} failed: status={response.status_code}, body={body}")
 
 
-def parse_sse_lines(response: requests.Response) -> Iterator[Dict[str, Any]]:
-    for raw_line in response.iter_lines():
-        if not raw_line:
-            continue
-        line = raw_line.decode("utf-8", errors="ignore")
-        if not line.startswith("data:"):
-            continue
-        payload = line[5:].strip()
-        if payload == "[DONE]":
-            yield {"done": True}
-            break
-        try:
-            yield json.loads(payload)
-        except json.JSONDecodeError:
-            yield {"raw": payload}
-
-
 def sse_json_stream(items) -> Iterator[str]:
     yield ": stream-open\n\n"
     try:
@@ -69,8 +49,40 @@ def sse_json_stream(items) -> Iterator[str]:
             "error_type": exc.__class__.__name__,
             "error": str(exc),
         })
-        yield f"data: {json.dumps({'error': {'message': str(exc), 'type': exc.__class__.__name__}}, ensure_ascii=False)}\n\n"
+        error = exc.to_openai_error() if hasattr(exc, "to_openai_error") else {
+            "error": {"message": str(exc), "type": exc.__class__.__name__}
+        }
+        yield f"data: {json.dumps(error, ensure_ascii=False)}\n\n"
     yield "data: [DONE]\n\n"
+
+
+def anthropic_sse_stream(items) -> Iterator[str]:
+    try:
+        for item in items:
+            event = str(item.get("type") or "message_delta") if isinstance(item, dict) else "message_delta"
+            yield f"event: {event}\n"
+            yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+    except Exception as exc:
+        logger.warning({
+            "event": "anthropic_sse_stream_error",
+            "error_type": exc.__class__.__name__,
+            "error": str(exc),
+        })
+        error = {"type": "error", "error": {"type": exc.__class__.__name__, "message": str(exc)}}
+        yield "event: error\n"
+        yield f"data: {json.dumps(error, ensure_ascii=False)}\n\n"
+
+
+def iter_sse_payloads(response: requests.Response) -> Iterator[str]:
+    for raw_line in response.iter_lines():
+        if not raw_line:
+            continue
+        line = raw_line.decode("utf-8", errors="ignore") if isinstance(raw_line, bytes) else str(raw_line)
+        if not line.startswith("data:"):
+            continue
+        payload = line[5:].strip()
+        if payload:
+            yield payload
 
 
 def save_images_from_text(text: str, prefix: str) -> list[Path]:
@@ -155,9 +167,10 @@ def extract_prompt_from_message_content(content: object) -> str:
     return "\n".join(parts).strip()
 
 
-def extract_image_from_message_content(content: object) -> tuple[bytes, str] | None:
+def extract_image_from_message_content(content: object) -> list[tuple[bytes, str]]:
     if not isinstance(content, list):
-        return None
+        return []
+    images = []
     for item in content:
         if not isinstance(item, dict):
             continue
@@ -168,29 +181,29 @@ def extract_image_from_message_content(content: object) -> tuple[bytes, str] | N
             if url.startswith("data:"):
                 header, _, data = url.partition(",")
                 mime = header.split(";")[0].removeprefix("data:")
-                return base64.b64decode(data), mime or "image/png"
-        if item_type == "input_image":
+                images.append((base64.b64decode(data), mime or "image/png"))
+        elif item_type == "input_image":
             image_url = str(item.get("image_url") or "")
             if image_url.startswith("data:"):
                 header, _, data = image_url.partition(",")
                 mime = header.split(";")[0].removeprefix("data:")
-                return base64.b64decode(data), mime or "image/png"
-    return None
+                images.append((base64.b64decode(data), mime or "image/png"))
+    return images
 
 
-def extract_chat_image(body: dict[str, object]) -> tuple[bytes, str] | None:
+def extract_chat_image(body: dict[str, object]) -> list[tuple[bytes, str]]:
     messages = body.get("messages")
     if not isinstance(messages, list):
-        return None
+        return []
     for message in reversed(messages):
         if not isinstance(message, dict):
             continue
         if str(message.get("role") or "").strip().lower() != "user":
             continue
-        result = extract_image_from_message_content(message.get("content"))
-        if result:
-            return result
-    return None
+        images = extract_image_from_message_content(message.get("content"))
+        if images:
+            return images
+    return []
 
 
 def extract_chat_prompt(body: dict[str, object]) -> str:
@@ -220,22 +233,6 @@ def parse_image_count(raw_value: object) -> int:
     if value < 1 or value > 4:
         raise HTTPException(status_code=400, detail={"error": "n must be between 1 and 4"})
     return value
-
-
-def build_chat_image_completion(model: str, image_result: dict[str, object]) -> dict[str, object]:
-    created = int(image_result.get("created") or time.time())
-    return {
-        "id": f"chatcmpl-{uuid.uuid4().hex}",
-        "object": "chat.completion",
-        "created": created,
-        "model": model,
-        "choices": [{
-            "index": 0,
-            "message": {"role": "assistant", "content": build_chat_image_markdown_content(image_result)},
-            "finish_reason": "stop",
-        }],
-        "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
-    }
 
 
 def build_chat_image_markdown_content(image_result: dict[str, object]) -> str:

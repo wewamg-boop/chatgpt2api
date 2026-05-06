@@ -8,6 +8,8 @@ import { CPAPoolsCard } from "./cpa-pools-card";
 import { ImportBrowserDialog } from "./import-browser-dialog";
 import { SettingsHeader } from "./settings-header";
 import { Sub2APIConnections } from "./sub2api-connections";
+import { UserKeysCard } from "./UserKeysCard";
+import { BackupSettingsCard } from "./BackupSettingsCard";
 import { useSettingsStore } from "./settings-store";
 
 function SettingsDataController() {
@@ -51,6 +53,8 @@ export default function SettingsPage() {
         <ConfigCard />
         <CPAPoolsCard />
         <Sub2APIConnections />
+        <UserKeysCard />
+        <BackupSettingsCard />
       </section>
       <CPAPoolDialog />
       <ImportBrowserDialog />

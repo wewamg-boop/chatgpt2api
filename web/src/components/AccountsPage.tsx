@@ -107,7 +107,7 @@ function formatQuota(account: Account) {
   if (isUnlimitedImageQuotaAccount(account)) {
     return "∞";
   }
-  if (account.imageQuotaUnknown) {
+  if (account.image_quota_unknown) {
     return "未知";
   }
   return String(Math.max(0, account.quota));
@@ -142,7 +142,7 @@ function formatQuotaSummary(accounts: Account[]) {
   if (availableAccounts.some(isUnlimitedImageQuotaAccount)) {
     return "∞";
   }
-  if (availableAccounts.some((account) => account.imageQuotaUnknown)) {
+  if (availableAccounts.some((account) => account.image_quota_unknown)) {
     return "未知";
   }
   return formatCompact(availableAccounts.reduce((sum, account) => sum + Math.max(0, account.quota), 0));
@@ -204,7 +204,7 @@ export default function AccountsPage() {
     try {
       const data = await fetchAccounts();
       setAccounts(normalizeAccounts(data.items));
-      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.id === id)));
+      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.access_token === id)));
     } catch (error) {
       const message = error instanceof Error ? error.message : "加载账户失败";
       toast.error(message);
@@ -239,7 +239,7 @@ export default function AccountsPage() {
   const startIndex = (safePage - 1) * Number(pageSize);
   const currentRows = filteredAccounts.slice(startIndex, startIndex + Number(pageSize));
   const allCurrentSelected =
-    currentRows.length > 0 && currentRows.every((row) => selectedIds.includes(row.id));
+    currentRows.length > 0 && currentRows.every((row) => selectedIds.includes(row.access_token));
 
   const summary = useMemo(() => {
     const total = accounts.length;
@@ -254,7 +254,7 @@ export default function AccountsPage() {
 
   const selectedTokens = useMemo(() => {
     const selectedSet = new Set(selectedIds);
-    return accounts.filter((item) => selectedSet.has(item.id)).map((item) => item.access_token);
+    return accounts.filter((item) => selectedSet.has(item.access_token)).map((item) => item.access_token);
   }, [accounts, selectedIds]);
 
   const abnormalTokens = useMemo(() => {
@@ -285,7 +285,7 @@ export default function AccountsPage() {
     try {
       const data = await deleteAccounts(tokens);
       setAccounts(normalizeAccounts(data.items));
-      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.id === id)));
+      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.access_token === id)));
       toast.success(`删除 ${data.removed ?? 0} 个账户`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "删除账户失败";
@@ -305,7 +305,7 @@ export default function AccountsPage() {
     try {
       const data = await refreshAccounts(accessTokens);
       setAccounts(normalizeAccounts(data.items));
-      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.id === id)));
+      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.access_token === id)));
       if (data.errors.length > 0) {
         const firstError = data.errors[0]?.error;
         toast.error(
@@ -342,7 +342,7 @@ export default function AccountsPage() {
         quota: Number(editQuota || 0),
       });
       setAccounts(normalizeAccounts(data.items));
-      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.id === id)));
+      setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.access_token === id)));
       setEditingAccount(null);
       toast.success("账号信息已更新");
     } catch (error) {
@@ -355,10 +355,10 @@ export default function AccountsPage() {
 
   const toggleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedIds((prev) => Array.from(new Set([...prev, ...currentRows.map((item) => item.id)])));
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...currentRows.map((item) => item.access_token)])));
       return;
     }
-    setSelectedIds((prev) => prev.filter((id) => !currentRows.some((row) => row.id === id)));
+    setSelectedIds((prev) => prev.filter((id) => !currentRows.some((row) => row.access_token === id)));
   };
 
   return (
@@ -654,17 +654,17 @@ export default function AccountsPage() {
 
                     return (
                       <tr
-                        key={account.id}
+                        key={account.access_token}
                         className="border-b border-gray-100 dark:border-gray-800/80 text-sm text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-50 dark:bg-gray-900/70"
                       >
                         <td className="px-4 py-3">
                           <Checkbox
-                            checked={selectedIds.includes(account.id)}
+                            checked={selectedIds.includes(account.access_token)}
                             onCheckedChange={(checked) => {
                               setSelectedIds((prev) =>
                                 checked
-                                  ? Array.from(new Set([...prev, account.id]))
-                                  : prev.filter((item) => item !== account.id),
+                                  ? Array.from(new Set([...prev, account.access_token]))
+                                  : prev.filter((item) => item !== account.access_token),
                               );
                             }}
                           />
@@ -710,7 +710,7 @@ export default function AccountsPage() {
                         </td>
                         <td className="px-4 py-3 text-xs leading-5 text-gray-500 dark:text-gray-400">
                           {(() => {
-                            const restore = formatRestoreAt(account.restoreAt);
+                            const restore = formatRestoreAt(account.restore_at);
                             return (
                               <div className="space-y-0.5">
                                 {restore.relative ? <div className="font-medium text-gray-700 dark:text-gray-300">{restore.relative}</div> : null}

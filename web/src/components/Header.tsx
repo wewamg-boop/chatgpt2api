@@ -19,6 +19,9 @@ export default function Header({ showNav, onLogout }: HeaderProps) {
   const navItems = [
     { path: '/', label: '图片生成' },
     { path: '/accounts', label: '账号管理' },
+    { path: '/image-manager', label: '图片管理' },
+    { path: '/logs', label: '日志' },
+    { path: '/register', label: '注册机' },
     { path: '/settings', label: '服务端设置' },
   ]
 

@@ -28,6 +28,12 @@ function normalizeConfig(config: SettingsConfig): SettingsConfig {
     refresh_account_interval_minute: Number(config.refresh_account_interval_minute || 5),
     proxy: typeof config.proxy === "string" ? config.proxy : "",
     base_url: typeof config.base_url === "string" ? config.base_url : "",
+    global_system_prompt: typeof config.global_system_prompt === "string" ? config.global_system_prompt : "",
+    image_retention_days: Number(config.image_retention_days || 7),
+    image_poll_timeout_secs: Number(config.image_poll_timeout_secs || 120),
+    image_account_concurrency: Number(config.image_account_concurrency || 1),
+    auto_remove_invalid_accounts: config.auto_remove_invalid_accounts ?? false,
+    auto_remove_rate_limited_accounts: config.auto_remove_rate_limited_accounts ?? false,
   };
 }
 

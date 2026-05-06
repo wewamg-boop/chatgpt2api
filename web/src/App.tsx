@@ -20,6 +20,9 @@ import ImageContextMenu from './components/ImageContextMenu'
 import { LoginPage } from './components/LoginPage'
 import AccountsPage from './components/AccountsPage'
 import SettingsPage from './components/settings/SettingsPage'
+import LogsPage from './components/LogsPage'
+import ImageManagerPage from './components/ImageManagerPage'
+import RegisterPage from './components/RegisterPage'
 
 function ImagePlayground() {
   const setSettings = useStore((s) => s.setSettings)
@@ -155,6 +158,30 @@ export default function App() {
           <>
             <Header showNav onLogout={handleLogout} />
             <SettingsPage />
+          </>
+        </RequireAuth>
+      } />
+      <Route path="/image-manager" element={
+        <RequireAuth>
+          <>
+            <Header showNav onLogout={handleLogout} />
+            <ImageManagerPage />
+          </>
+        </RequireAuth>
+      } />
+      <Route path="/logs" element={
+        <RequireAuth>
+          <>
+            <Header showNav onLogout={handleLogout} />
+            <LogsPage />
+          </>
+        </RequireAuth>
+      } />
+      <Route path="/register" element={
+        <RequireAuth>
+          <>
+            <Header showNav onLogout={handleLogout} />
+            <RegisterPage />
           </>
         </RequireAuth>
       } />
